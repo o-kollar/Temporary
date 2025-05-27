@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>POC Generátor Obrázkov</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="POC Generátora obrázkov pre Tatra banku, Nezdielať">
+    <script src="./build/tailwind.js"></script>
+    <script src="./build/vue.js"></script>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  </head>
+  <style>
+    /* Hide scrollbar for all browsers */
+    .no-scrollbar {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+  </style>
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <div id="app" class="flex flex-col flex-grow">
+      <!-- Sidebar -->
+      <div class="w-full lg:w-64 p-4 sticky top-0 z-10">
+        <div class="inline-flex overflow-hidden">
+          <!-- Retry Button -->
+          <button
+            @click="retryImage"
+            class="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-700"
+            title="Skúsiť znova"
+          >
+            <svg
+              class="w-6 h-6"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"
+              />
+            </svg>
+          </button>
+          <!-- Edit Button -->
+          <button
+            @click="editImage"
+            class="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-700"
+            title="Upraviť prompt"
+          >
+            <svg
+              class="w-6 h-6"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10.779 17.779 4.36 19.918 6.5 13.5m4.279 4.279 8.364-8.643a3.027 3.027 0 0 0-2.14-5.165 3.03 3.03 0 0 0-2.14.886L6.5 13.5m4.279 4.279L6.499 13.5m2.14 2.14 6.213-6.504M12.75 7.04 17 11.28"
+              />
+            </svg>
+          </button>
+          <!--Copy prompt-->
+           <button
+           @click="copyPrompt"
+            class="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-700"
+            title="Kopírovať prompt"
+          >
+            <svg class="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 4h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3m0 3h6m-5-4v4h4V3h-4Z"/>
+</svg>
+
+          </button>
+          <!-- Download Button -->
+          <button
+            @click="downloadImage"
+            class="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-700"
+            title="Stiahnuť obrázok"
+          >
+            <svg
+              class="w-6 h-6"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 13V4M7 14H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-2m-1-5-4 5-4-5m9 8h.01"
+              />
+            </svg>
+          </button>
+          <!-- Delete Button -->
+          <button
+            @click="deleteImage"
+            class="px-3 py-1.5 text-sm text-gray-400 hover:text-rose-600"
+            title="Odstrániť obrázok"
+          >
+            <svg
+              class="w-6 h-6"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <main class="flex-grow overflow-y-auto">
+        <!-- Featured Image -->
+        <div v-if="images.length" class="p-5">
+          <div
+            class="w-full max-w-4xl h-[52vh] mx-auto overflow-hidden"
+          >
+            <img
+              :src="featuredImage"
+              class="w-full h-full object-contain rounded-lg"
+            />
+          </div>
+        </div>
+
+        <!-- Image Grid -->
+        <div
+          v-if="images.length"
+          class="flex overflow-x-auto whitespace-nowrap gap-2.5 p-5 no-scrollbar"
+        >
+          <div
+            v-for="(img, index) in images"
+            :key="index"
+            class="flex items-center justify-center w-[150px] h-36 flex-shrink-0"
+          >
+            <img
+              :src="img.src"
+              @click="selectImage(img, index)"
+              class="max-w-full max-h-full object-contain cursor-pointer transition duration-300 rounded-lg"
+              :class="selectedImageIndex === index ? 'ring-4 ring-rose-300 ring-offset-2' : ''"
+            />
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div
+          v-else
+          class="flex flex-col justify-center items-center p-12 text-gray-500"
+        >
+          <svg
+            class="w-32 h-32 text-gray-400"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m15 9-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+          <p>Zatiaľ neboli vygenerované žiadne obrázky.</p>
+        </div>
+      </main>
+
+      <!-- Form -->
+      <footer class="w-full p-4">
+        <form
+          @submit.prevent="submitForm"
+          class="max-w-4xl bg-white mx-auto"
+        >
+          <div class="rounded-xl border border-gray-300 border-b-0">
+            <textarea
+              v-model="prompt"
+              @keydown.enter.prevent="handleEnter"
+              class="w-full resize-none rounded-t-xl px-4 py-2 border-none focus:ring-0 focus:outline-none sm:text-sm"
+              rows="4"
+              placeholder="Opíš svoj obrázok..."
+            ></textarea>
+          </div>
+          <div
+            class="flex flex-wrap items-center gap-2 bg-white p-3 rounded-b-xl border border-t-0 border-gray-300"
+          >
+            <!-- Aspect Ratio Dropdown -->
+            <span
+              class="inline-flex h-10 items-center justify-center rounded-full bg-rose-100 px-2.5 py-0.5 text-rose-900"
+            >
+              <div class="relative group">
+                <button
+                  type="button"
+                  @click="toggleAspectDropdown"
+                  class="underline flex items-center"
+                  title="Nastaviť pomer strán"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M16 18H8l2.5-6 2 4 1.5-2 2 4Zm-1-8.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z"
+                    />
+                    <path
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 3v4a1 1 0 0 1-1 1H5m14-4v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1ZM8 18h8l-2-4-1.5 2-2-4L8 18Zm7-8.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z"
+                    />
+                  </svg>
+                  {{ selectedAspect }}
+                </button>
+                <div
+                  v-if="showAspectDropdown"
+                  class="absolute z-10 mb-2 bottom-full w-56 rounded-md border bg-white shadow-lg"
+                >
+                  <ul>
+                    <li
+                      v-for="aspect in aspectOptions"
+                      :key="aspect"
+                      @click="selectAspect(aspect)"
+                      class="p-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {{ aspect }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </span>
+
+            <!-- Quantity Selector -->
+            <div x-data="{ quantity: 1 }" class="inline-flex items-center rounded-full bg-rose-100 text-rose-700">
+              <button 
+                type="button" 
+                @click="quantity = Math.max(1, quantity - 1)" 
+                class="px-4 py-2"
+                :disabled="quantity <= 1"
+                title="Znížiť počet"
+              >-</button>
+              <div class="w-12 h-10 flex items-center justify-center">{{ quantity }}</div>
+              <button 
+                type="button" 
+                @click="quantity = Math.min(2, quantity + 1)" 
+                class="px-4 py-2"
+                :disabled="quantity >= 2"
+                title="Zvýšiť počet"
+              >+</button>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="ml-auto rounded-full p-3 bg-black text-rose-200"
+              title="Generovať obrázok"
+            >
+              <!-- Arrow Icon -->
+              <svg
+                v-if="loading"
+                class="w-6 h-6 animate-spin"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <rect
+                  width="12"
+                  height="12"
+                  x="6"
+                  y="6"
+                  stroke="currentColor"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  rx="1"
+                />
+              </svg>
+              <svg
+                v-else
+                class="w-6 h-6"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M8.6 5.2A1 1 0 0 0 7 6v12a1 1 0 0 0 1.6.8l8-6a1 1 0 0 0 0-1.6l-8-6Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        </form>
+      </footer>
+    </div>
+    <script src="./script.js"></script>
+  </body>
+</html>
